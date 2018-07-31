@@ -14,7 +14,7 @@ live coding them requires that you have your SuperDirt instance in an environmen
 (
 {
 	var numChannels = ~dirt.numChannels;
-
+	var busses = ~dirt.orbits.collect { |x| x.dryBus.index };
 
 
 	// write variants for different sample buffer sizes
@@ -63,7 +63,7 @@ live coding them requires that you have your SuperDirt instance in an environmen
 
 	SynthDef("dirt_gate" ++ numChannels, { |out, in, sustain = 1, fadeInTime = 0.001, fadeTime = 0.001, amp = 1|
 		var signal = In.ar(in, numChannels);
-		 //  doneAction: 14: free surrounding group and all nodes
+		//  doneAction: 14: free surrounding group and all nodes
 		var env = EnvGen.ar(Env([0, 1, 1, 0], [fadeInTime, sustain, fadeTime], \sin), levelScale: amp, doneAction: 14);
 		signal = signal * env * DirtGateCutGroup.ar(fadeTime, doneAction: 14);
 		OffsetOut.ar(out, signal);
@@ -160,9 +160,9 @@ live coding them requires that you have your SuperDirt instance in an environmen
 
 	/*
 
-	 Global synth defs: these synths run in each DirtOrbit and are only released when it is stopped
-	 when you change them, to update them, hit cmd-period (i.e. stop the synths on the server) once.
-	 they'll come back automatically
+	Global synth defs: these synths run in each DirtOrbit and are only released when it is stopped
+	when you change them, to update them, hit cmd-period (i.e. stop the synths on the server) once.
+	they'll come back automatically
 
 	*/
 
@@ -345,6 +345,17 @@ live coding them requires that you have your SuperDirt instance in an environmen
 		ReplaceOut.ar(out, signal);
 	}, [\ir, \ir, \ir]).add;
 
+
+
+
+	SynthDef("dirt_compressor" ++ ~dirt.numChannels, { |dryBus, effectBus, controlOrbit=(busses[0]),cThreshold=(-20),cRatio=1,cAttack=0.01,cRelease=0.1, gate = 1|
+		var signal = In.ar(dryBus, ~dirt.numChannels);
+		var	controlBus = Select.kr(controlOrbit, busses);
+		var control = In.ar(controlBus, ~dirt.numChannels);
+		signal = Compander.ar(signal,control,thresh:cThreshold.dbamp,slopeAbove:1/cRatio,clampTime:cAttack,relaxTime:cRelease);
+		signal = signal * EnvGen.kr(Env.asr, gate, doneAction:2);
+		ReplaceOut.ar(dryBus, signal);
+	}, [\ir, \ir]).add;
 
 	"---- core synth defs loaded ----".postln;
 

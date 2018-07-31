@@ -391,6 +391,9 @@ DirtOrbit {
 		synthBus = Bus.audio(server, dirt.numChannels);
 		dryBus = Bus.audio(server, dirt.numChannels);
 		globalEffectBus = Bus.audio(server, dirt.numChannels);
+		// Something like;
+		// sideChains = dirt.orbits.collect({|x| Bus.audio(server,dirt.numChannels)});
+		// each orbit has a list of Busses of all the other orbits, and you can direct the audio from other things to it.....
 		minSustain = 8 / server.sampleRate;
 		this.initDefaultGlobalEffects;
 		this.initNodeTree;
@@ -404,10 +407,12 @@ DirtOrbit {
 		this.globalEffects = [
 			GlobalDirtEffect(\dirt_delay, [\delaytime, \delayfeedback, \delayAmp, \lock, \cps]),
 			GlobalDirtEffect(\dirt_reverb, [\size, \room, \dry]),
+			GlobalDirtEffect(\dirt_compressor, [\controlOrbit, \cThreshold, \cRatio, \cAttack, \cRelease]),
 			GlobalDirtEffect(\dirt_leslie, [\leslie, \lrate, \lsize]),
 			GlobalDirtEffect(\dirt_monitor, [\dirtOut])
 		]
 	}
+
 
 	globalEffects_ { |array|
 		globalEffects = array.collect { |x| x.numChannels = dirt.numChannels }
